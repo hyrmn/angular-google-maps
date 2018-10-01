@@ -272,6 +272,10 @@ export class AgmMap implements OnChanges, OnInit, OnDestroy {
   ];
 
   private _observableSubscriptions: Subscription[] = [];
+
+  private _currentCenterLongitude: number = 0;
+  private _currentCenterLatitude: number = 0;
+
   private _fitBoundsSubscription: Subscription;
 
   /**
@@ -440,7 +444,10 @@ export class AgmMap implements OnChanges, OnInit, OnDestroy {
     if (typeof this.latitude !== 'number' || typeof this.longitude !== 'number') {
       return;
     }
-    this._setCenter();
+    // apply changes to map
+    if (this.latitude !== this._currentCenterLatitude || this.longitude !== this._currentCenterLongitude) {
+      this._setCenter();
+    }
   }
 
   private _setCenter() {
@@ -453,6 +460,8 @@ export class AgmMap implements OnChanges, OnInit, OnDestroy {
     } else {
       this._mapsWrapper.setCenter(newCenter);
     }
+    this._currentCenterLatitude = this.latitude;
+    this._currentCenterLongitude = this.longitude;
   }
 
   private _fitBounds() {
@@ -494,9 +503,9 @@ export class AgmMap implements OnChanges, OnInit, OnDestroy {
   private _handleMapCenterChange() {
     const s = this._mapsWrapper.subscribeToMapEvent<void>('center_changed').subscribe(() => {
       this._mapsWrapper.getCenter().then((center: LatLng) => {
-        this.latitude = center.lat();
-        this.longitude = center.lng();
-        this.centerChange.emit(<LatLngLiteral>{lat: this.latitude, lng: this.longitude});
+        this._currentCenterLatitude = center.lat();
+        this._currentCenterLongitude = center.lng();
+        this.centerChange.emit(<LatLngLiteral>{lat: this._currentCenterLatitude, lng: this._currentCenterLongitude});
       });
     });
     this._observableSubscriptions.push(s);
